@@ -108,8 +108,14 @@ st.title("EV Model Take Rate Simulator")
 tab1, tab2 = st.tabs(["Simulation", "Take Rate Model Description"])
 
 with tab1:
-    st.sidebar.header("Select Customer Group and Market")
-    customer_group = st.sidebar.selectbox("Customer Group", ["Family First", "Urban Single", "Grey Hair"])
+if 'customer_group' not in st.session_state:
+    st.session_state.customer_group = "Family First"  # Set a default value
+
+st.sidebar.header("Select Customer Group")
+customer_group = st.sidebar.selectbox("Customer Group", list(customer_group_descriptions.keys()), index=list(customer_group_descriptions.keys()).index(st.session_state.customer_group))
+st.session_state.customer_group = customer_group  # Store the selected customer group
+
+st.sidebar.write(f"**Description:** {customer_group_descriptions[customer_group]}")
     market = st.sidebar.selectbox("Market", ["Germany", "China", "US"])
     st.sidebar.write(f"**Description:** {customer_group_descriptions[customer_group]}")
 
