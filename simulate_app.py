@@ -2,9 +2,9 @@ import streamlit as st
 import numpy as np
 import matplotlib.pyplot as plt
 
-# Define take rate model
-def simulate_take_rate_with_variability(model1, model2, customer_group, price_stddev=0.05, range_stddev=0.05):
-    """Simulate take rates based on predefined logic with customer group preferences and variability."""
+# Define take rate model with market adjustments
+def simulate_take_rate_with_variability(model1, model2, customer_group, market, price_stddev=0.05, range_stddev=0.05):
+    """Simulate take rates based on predefined logic with customer group preferences, market, and variability."""
     np.random.seed(42)
     base_rate = 50  # Start with an even 50-50 split
     
@@ -30,8 +30,39 @@ def simulate_take_rate_with_variability(model1, model2, customer_group, price_st
         }
     }
     
+    # Market-based adjustment
+    market_weights = {
+        "Germany": {
+            "price": -0.1,  # Price sensitivity in Germany
+            "brand": 0.3,   # Higher preference for premium brands like BMW or Mercedes
+            "electric_range": 0.2,
+            "adas": 0.3
+        },
+        "China": {
+            "price": 0.2,
+            "brand": -0.3,  # Lower brand preference for local EVs
+            "electric_range": 0.4,
+            "adas": 0.2
+        },
+        "US": {
+            "price": 0.1,
+            "brand": 0.2,   # Moderate brand preference (e.g., Tesla)
+            "electric_range": 0.3,
+            "adas": 0.4
+        }
+    }
+    
     # Get the weights for the selected customer group
     weights = customer_group_weights[customer_group]
+    
+    # Get the market adjustment factors
+    market_adjustments = market_weights[market]
+    
+    # Adjust weights based on market
+    weights["price"] += market_adjustments["price"]
+    weights["brand"] += market_adjustments["brand"]
+    weights["electric_range"] += market_adjustments["electric_range"]
+    weights["adas"] += market_adjustments["adas"]
     
     # Simulate price variation (add random deviation within a given range)
     price_diff = np.random.normal(0, price_stddev * model1['price'])
@@ -72,13 +103,13 @@ def simulate_take_rate_with_variability(model1, model2, customer_group, price_st
     return base_rate, 100 - base_rate
 
 # Run Monte Carlo simulation
-def run_monte_carlo_simulation(model1, model2, customer_group, n_simulations=1000):
+def run_monte_carlo_simulation(model1, model2, customer_group, market, n_simulations=1000):
     """Run Monte Carlo simulations to estimate take rate variability."""
     take_rate_model1 = []
     take_rate_model2 = []
     
     for _ in range(n_simulations):
-        tr1, tr2 = simulate_take_rate_with_variability(model1, model2, customer_group)
+        tr1, tr2 = simulate_take_rate_with_variability(model1, model2, customer_group, market)
         take_rate_model1.append(tr1)
         take_rate_model2.append(tr2)
     
@@ -98,7 +129,7 @@ st.title("EV Model Take Rate Simulator")
 tab1, tab2, tab3 = st.tabs(["Simulation", "Monte Carlo Simulation", "Take Rate Model Description"])
 
 with tab1:
-    st.sidebar.header("Select Customer Group")
+    st.sidebar.header("Select Customer Group and Market")
     customer_group = st.sidebar.selectbox("Customer Group", list(customer_group_descriptions.keys()))
     market = st.sidebar.selectbox("Market", ["Germany", "China", "US"])
     st.sidebar.write(f"**Description:** {customer_group_descriptions[customer_group]}")
@@ -138,47 +169,40 @@ with tab1:
     if st.button("Simulate Take Rates"):
         model1 = {"brand": brand1, "bodytype": bodytype1, "electric_range": e_range1, "price": price1, "adas": adas1}
         model2 = {"brand": brand2, "bodytype": bodytype2, "electric_range": e_range2, "price": price2, "adas": adas2}
-        take_rate1, take_rate2 = simulate_take_rate_with_variability(model1, model2, customer_group)
+        take_rate1, take_rate2 = simulate_take_rate_with_variability(model1, model2, customer_group, market)
         
         st.success(f"Take Rate for Model 1: {take_rate1}%")
         st.success(f"Take Rate for Model 2: {take_rate2}%")
 
 with tab2:
     st.subheader("Monte Carlo Simulation Results")
-    model1 = {"brand": "Tesla", "electric_range": 500, "price": 50, "adas": "L3"}
-    model2 = {"brand": "BYD", "electric_range": 500, "price": 55, "adas": "L3+"}
-    customer_group = "Urban Single"
+    model1 = {"brand": "Tesla", "bodytype": "Sedan", "electric_range": 500, "price": 50, "adas": "L2"}
+    model2 = {"brand": "BYD", "bodytype": "SUV", "electric_range": 500, "price": 50, "adas": "L2"}
     
-    # Run the simulation
-    take_rate_model1, take_rate_model2 = run_monte_carlo_simulation(model1, model2, customer_group)
+    customer_group = "Family First"  # Default
+    market = "Germany"  # Default
     
-    st.write(f"Take Rate Distribution for Model 1 (Mean: {np.mean(take_rate_model1):.2f}%)")
-    st.write(f"Take Rate Distribution for Model 2 (Mean: {np.mean(take_rate_model2):.2f}%)")
-
-    # Visualize as a histogram
-    plt.figure(figsize=(10, 6))
-    plt.hist(take_rate_model1, bins=30, alpha=0.5, label="Model 1")
-    plt.hist(take_rate_model2, bins=30, alpha=0.5, label="Model 2")
-    plt.legend(loc="upper right")
-    plt.xlabel("Take Rate (%)")
-    plt.ylabel("Frequency")
-    plt.title("Monte Carlo Simulation of Take Rates")
-    st.pyplot(plt)
+    take_rate_model1, take_rate_model2 = run_monte_carlo_simulation(model1, model2, customer_group, market)
+    
+    st.write("Simulation Results")
+    st.write(f"Model 1 Take Rate Mean: {np.mean(take_rate_model1):.2f}%")
+    st.write(f"Model 2 Take Rate Mean: {np.mean(take_rate_model2):.2f}%")
+    
+    fig, ax = plt.subplots()
+    ax.hist(take_rate_model1, bins=20, alpha=0.5, label="Model 1")
+    ax.hist(take_rate_model2, bins=20, alpha=0.5, label="Model 2")
+    ax.set_title('Monte Carlo Simulation of Take Rates')
+    ax.set_xlabel('Take Rate (%)')
+    ax.set_ylabel('Frequency')
+    ax.legend()
+    st.pyplot(fig)
 
 with tab3:
-    st.subheader("How the Take Rate Model Works")
+    st.subheader("Take Rate Model Description")
     st.write("""
-    The take rate model simulates the percentage of customers choosing one EV model over another based on various attributes such as:
-    - **Brand**: Certain brands, like Tesla, may have a higher influence on take rate.
-    - **Price**: The price difference between models affects the take rate, with lower prices generally attracting more customers.
-    - **Electric Range**: Customers often prefer models with longer electric ranges.
-    - **ADAS Level**: Advanced Driver Assistance Systems (ADAS) can also influence consumer decisions.
-    
-    Customer group preferences are also taken into account. For example:
-    - **Family First**: Values spacious, safe, and cost-effective EVs.
-    - **Urban Single**: Prefers trendy, tech-savvy EVs.
-    - **Grey Hair**: Seeks comfort and reliability.
-
-    These preferences, combined with the attributes, determine the resulting take rate.
+    This model simulates how two EV models compete for customer preferences based on 
+    attributes such as price, electric range, brand, and ADAS level, as well as the selected 
+    customer group and market. The simulation includes variability in the models' attributes, 
+    such as pricing and range, to reflect real-world customer decision-making processes.
     """)
 
