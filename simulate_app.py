@@ -78,5 +78,8 @@ if st.button("Simulate Take Rates"):
     model1 = {"brand": brand1, "bodytype": bodytype1, "electric_range": e_range1, "price": price1, "adas": adas1}
     model2 = {"brand": brand2, "bodytype": bodytype2, "electric_range": e_range2, "price": price2, "adas": adas2}
     take_rate1, take_rate2 = simulate_take_rate(model1, model2, customer_group)
-    
+
+# Display results in sidebar 
+    st.sidebar.write(f"Take Rate for Model 1: {take_rate1}%")
+    st.sidebar.write(f"Take Rate for Model 2: {take_rate2}%")    
     
