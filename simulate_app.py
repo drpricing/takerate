@@ -1,5 +1,6 @@
 import streamlit as st
 import numpy as np
+import matplotlib.pyplot as plt
 
 def simulate_take_rate(model1, model2, customer_group):
     """Simulate take rates based on predefined logic."""
@@ -39,6 +40,8 @@ market = st.sidebar.selectbox("Market", ["Germany", "China", "US"])
 
 st.sidebar.write(f"**Description:** {customer_group_descriptions[customer_group]}")
 
+st.sidebar.header("Simulation Results")
+
 def reset_values():
     st.session_state.brand1 = "Tesla"
     st.session_state.body1 = "Sedan"
@@ -76,5 +79,13 @@ if st.button("Simulate Take Rates"):
     model2 = {"brand": brand2, "bodytype": bodytype2, "electric_range": e_range2, "price": price2, "adas": adas2}
     take_rate1, take_rate2 = simulate_take_rate(model1, model2, customer_group)
     
-    st.success(f"Take Rate for Model 1: {take_rate1}%")
-    st.success(f"Take Rate for Model 2: {take_rate2}%")
+    # Display results in sidebar as a bar chart
+    st.sidebar.subheader("Simulation Results")
+    st.sidebar.write(f"Take Rate for Model 1: {take_rate1}%")
+    st.sidebar.write(f"Take Rate for Model 2: {take_rate2}%")
+    
+    fig, ax = plt.subplots()
+    ax.bar(["Model 1", "Model 2"], [take_rate1, take_rate2], color=['blue', 'red'])
+    ax.set_ylabel("Take Rate (%)")
+    ax.set_ylim(0, 100)
+    st.sidebar.pyplot(fig)
