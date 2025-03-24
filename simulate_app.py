@@ -102,35 +102,14 @@ def simulate_take_rate_with_variability(model1, model2, customer_group, market, 
     base_rate = max(0, min(100, base_rate))  # Ensure within 0-100 range
     return base_rate, 100 - base_rate
 
-# Run Monte Carlo simulation
-def run_monte_carlo_simulation(model1, model2, customer_group, market, n_simulations=1000):
-    """Run Monte Carlo simulations to estimate take rate variability."""
-    take_rate_model1 = []
-    take_rate_model2 = []
-    
-    for _ in range(n_simulations):
-        tr1, tr2 = simulate_take_rate_with_variability(model1, model2, customer_group, market)
-        take_rate_model1.append(tr1)
-        take_rate_model2.append(tr2)
-    
-    # Return results as distributions
-    return take_rate_model1, take_rate_model2
-
-# Customer group descriptions
-customer_group_descriptions = {
-    "Family First": "Families looking for spacious, safe, and cost-efficient EVs.",
-    "Urban Single": "Young professionals in cities who value technology and design.",
-    "Grey Hair": "Older buyers seeking comfort, safety, and reliability."
-}
-
 # Streamlit app structure
 st.title("EV Model Take Rate Simulator")
 
-tab1, tab2, tab3 = st.tabs(["Simulation", "Monte Carlo Simulation", "Take Rate Model Description"])
+tab1, tab2 = st.tabs(["Simulation", "Take Rate Model Description"])
 
 with tab1:
     st.sidebar.header("Select Customer Group and Market")
-    customer_group = st.sidebar.selectbox("Customer Group", list(customer_group_descriptions.keys()))
+    customer_group = st.sidebar.selectbox("Customer Group", ["Family First", "Urban Single", "Grey Hair"])
     market = st.sidebar.selectbox("Market", ["Germany", "China", "US"])
     st.sidebar.write(f"**Description:** {customer_group_descriptions[customer_group]}")
 
@@ -175,34 +154,35 @@ with tab1:
         st.success(f"Take Rate for Model 2: {take_rate2}%")
 
 with tab2:
-    st.subheader("Monte Carlo Simulation Results")
-    model1 = {"brand": "Tesla", "bodytype": "Sedan", "electric_range": 500, "price": 50, "adas": "L2"}
-    model2 = {"brand": "BYD", "bodytype": "SUV", "electric_range": 500, "price": 50, "adas": "L2"}
-    
-    customer_group = "Family First"  # Default
-    market = "Germany"  # Default
-    
-    take_rate_model1, take_rate_model2 = run_monte_carlo_simulation(model1, model2, customer_group, market)
-    
-    st.write("Simulation Results")
-    st.write(f"Model 1 Take Rate Mean: {np.mean(take_rate_model1):.2f}%")
-    st.write(f"Model 2 Take Rate Mean: {np.mean(take_rate_model2):.2f}%")
-    
-    fig, ax = plt.subplots()
-    ax.hist(take_rate_model1, bins=20, alpha=0.5, label="Model 1")
-    ax.hist(take_rate_model2, bins=20, alpha=0.5, label="Model 2")
-    ax.set_title('Monte Carlo Simulation of Take Rates')
-    ax.set_xlabel('Take Rate (%)')
-    ax.set_ylabel('Frequency')
-    ax.legend()
-    st.pyplot(fig)
+    st.header("Take Rate Model Description")
 
-with tab3:
-    st.subheader("Take Rate Model Description")
-    st.write("""
-    This model simulates how two EV models compete for customer preferences based on 
-    attributes such as price, electric range, brand, and ADAS level, as well as the selected 
-    customer group and market. The simulation includes variability in the models' attributes, 
-    such as pricing and range, to reflect real-world customer decision-making processes.
+    st.markdown("""
+    ### Take Rate Model Description
+
+    This model simulates how two electric vehicle (EV) models compete for customer preferences based on key attributes such as **price**, **electric range**, **brand**, and **ADAS (Advanced Driver Assistance Systems)** level. These attributes, along with the selection of a **customer group** and **market**, determine the "take rate" for each model, which reflects the likelihood of customers choosing one model over the other.
+
+    #### Key Components of the Model:
+    1. **Price Sensitivity:** The model adjusts the take rates based on the relative price of the two models. A price differential can significantly affect a customer's decision, but the weight of price varies depending on the customer group and market.
+       
+    2. **Electric Range:** A higher electric range generally increases the attractiveness of an EV. The model adjusts take rates based on this feature, factoring in the customer group's demand for longer range and the market's focus on electric vehicle performance.
+
+    3. **Brand Preference:** Customers have different preferences for certain brands. For instance, Tesla may be more attractive to certain customer groups, while local or less premium brands could appeal to price-sensitive consumers in specific markets.
+
+    4. **ADAS Features:** ADAS (ranging from L2 to L3+ capabilities) plays a growing role in customers' purchasing decisions. The model accounts for how different levels of ADAS influence the take rate, with higher ADAS levels offering a more competitive edge.
+
+    5. **Customer Group Preferences:** The model includes variations in customer behavior based on their type:
+       - **Family First:** Focuses on families that prioritize safety, comfort, and affordability.
+       - **Urban Single:** A younger, tech-savvy group that values design and technological innovation.
+       - **Grey Hair:** Older customers who are more interested in comfort, reliability, and ease of use.
+
+    6. **Market Adjustments:** Different markets (Germany, China, US) have varying degrees of sensitivity to the aforementioned attributes. For example, in Germany, consumers may be more inclined to choose well-established brands, while in China, price might be a more significant factor.
+
+    #### How the Model Works:
+    - **Price adjustments** are factored into the take rate based on price differences between the models, but the impact of these adjustments varies depending on customer group preferences and market conditions.
+    - **Electric range** is another major factor. The model simulates how a higher range can influence customer decisions, especially for long-distance travel.
+    - **Brand** and **ADAS levels** are weighted according to the customer group. For example, urban consumers might place a higher value on modern ADAS features, while families may prioritize safety and reliability.
+
+    To enhance the realism of the simulation, the model also introduces **variability** in the attributes—price and electric range—using a small random deviation. This accounts for factors such as market promotions, price changes, or unforeseen variances in model specifications.
+
+    By running this simulation, users can better understand how each attribute, customer group, and market conditions impact the decision-making process for EV buyers, providing valuable insights into pricing strategies and market positioning.
     """)
-
