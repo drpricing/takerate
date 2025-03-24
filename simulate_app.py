@@ -79,13 +79,12 @@ if st.button("Simulate Take Rates"):
     model2 = {"brand": brand2, "bodytype": bodytype2, "electric_range": e_range2, "price": price2, "adas": adas2}
     take_rate1, take_rate2 = simulate_take_rate(model1, model2, customer_group)
     
-    # Display results in sidebar as a bar chart
-    st.sidebar.subheader("Simulation Results")
+    # Display results in sidebar as a horizontal bar chart
     st.sidebar.write(f"Take Rate for Model 1: {take_rate1}%")
     st.sidebar.write(f"Take Rate for Model 2: {take_rate2}%")
     
-    fig, ax = plt.subplots()
-    ax.bar(["Model 1", "Model 2"], [take_rate1, take_rate2], color=['blue', 'red'])
-    ax.set_ylabel("Take Rate (%)")
-    ax.set_ylim(0, 100)
+    fig, ax = plt.subplots(figsize=(6, 3))
+    ax.barh(["Model 1", "Model 2"], [take_rate1, take_rate2], color=['blue', 'red'])
+    ax.set_xlabel("Take Rate (%)")
+    ax.set_xlim(0, 100)
     st.sidebar.pyplot(fig)
